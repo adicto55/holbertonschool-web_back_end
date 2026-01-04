@@ -1,0 +1,37 @@
+===============================
+7-base_geometry.py Doctest
+===============================
+
+Test the BaseGeometry class:
+
+>>> BaseGeometry = __import__('7-base_geometry').BaseGeometry
+
+Create an instance:
+>>> bg = BaseGeometry()
+
+Test integer_validator with valid integer:
+>>> bg.integer_validator("my_int", 12)
+
+Test integer_validator with string (should raise TypeError):
+>>> bg.integer_validator("name", "John")
+Traceback (most recent call last):
+    ...
+TypeError: name must be an integer
+
+Test integer_validator with 0 (should raise ValueError):
+>>> bg.integer_validator("age", 0)
+Traceback (most recent call last):
+    ...
+ValueError: age must be greater than 0
+
+Test integer_validator with negative number (should raise ValueError):
+>>> bg.integer_validator("distance", -4)
+Traceback (most recent call last):
+    ...
+ValueError: distance must be greater than 0
+
+Test area() method (should raise Exception):
+>>> bg.area()
+Traceback (most recent call last):
+    ...
+Exception: area() is not implemented
