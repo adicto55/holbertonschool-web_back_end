@@ -9,6 +9,18 @@ Test the BaseGeometry class:
 Create an instance:
 >>> bg = BaseGeometry()
 
+Test integer_validator with no arguments (should raise TypeError):
+>>> bg.integer_validator()
+Traceback (most recent call last):
+    ...
+TypeError: integer_validator() missing 2 required positional arguments: 'name' and 'value'
+
+Test integer_validator with only name argument (should raise TypeError):
+>>> bg.integer_validator("age")
+Traceback (most recent call last):
+    ...
+TypeError: integer_validator() missing 1 required positional argument: 'value'
+
 Test integer_validator with valid integer:
 >>> bg.integer_validator("my_int", 12)
 
