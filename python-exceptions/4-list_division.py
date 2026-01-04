@@ -1,4 +1,7 @@
 #!/usr/bin/python3
+"""Module for element-by-element list division"""
+
+
 def list_division(my_list_1, my_list_2, list_length):
     """Divide element by element 2 lists"""
     new_list = []
