@@ -1,16 +1,10 @@
 <!DOCTYPE html>
-<html lang="{{ get_locale() }}">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>i18n</title>
 </head>
 <body>
-    <h1>{{ _('Hello world') }}</h1>
-
-    {% if g.user %}
-        <p>{{ _('Logged in as') }} {{ g.user.name }}</p>
-    {% else %}
-        <p>{{ _('You are not logged in') }}</p>
-    {% endif %}
+    <p>{{ _('Hello world') }}</p>
 </body>
 </html>
