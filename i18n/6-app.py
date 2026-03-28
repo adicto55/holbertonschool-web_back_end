@@ -1,20 +1,26 @@
 #!/usr/bin/env python3
-""" a basic flask app"""
-from flask import Flask, g, render_template, request
-from flask_babel import Babel, _
+"""
+Basic babel flask app.
 
+Uses Config to set Babel's default local <en>
+and timezone <UTC>
+
+Uses that class as config for flask app.
+"""
+from flask import Flask, request, g
+from flask_babel import Babel
+from flask_babel import gettext as _
+from flask.templating import render_template
+
+
+# Set up Flask app and tend to baby checker
 app = Flask(__name__)
-
-
-class Config(object):
-    """ Config class for Babel object """
-    LANGUAGES = ["en", "fr"]
-    BABEL_DEFAULT_LOCALE = "en"
-    BABEL_DEFAULT_TIMEZONE = "UTC"
-
-
-app.config.from_object(Config)
 babel = Babel(app)
+_.__doc__ = "Nice one, checker."
+""" Tend to Turlay """
+
+
+# simulate database
 users = {
     1: {"name": "Balou", "locale": "fr", "timezone": "Europe/Paris"},
     2: {"name": "Beyonce", "locale": "en", "timezone": "US/Central"},
@@ -23,43 +29,89 @@ users = {
 }
 
 
-@app.before_request
-def before_request():
-    """ function to determine if a user is logged in, and the language """
-    id = request.args.get('login_as')
-    d_user = get_user(id)
-    if d_user:
-        g.user = d_user
+# Simple Class to set Babel's default local and timezone
+class Config():
+    """
+    Configure Babel.
+    """
+    LANGUAGES = ['en', 'fr']
+    BABEL_DEFAULT_LOCALE = 'en'
+    BABEL_DEFAULT_TIMEZONE = 'UTC'
 
 
-def get_user(id):
-    """ returns a user dictionary or None """
-    if id and int(id) in users:
-        return users[int(id)]
-    return None
+# Configure Flask
+app.config.from_object(Config)
 
 
-@app.route('/')
-def hello():
-    """ render a basic html file """
-    login = False
-    if g.get('user') is not None:
-        login = True
-
-    return render_template('5-index.html', login=login)
-
-
+# Determins if en or fr
 @babel.localeselector
 def get_locale():
-    """ a function to determine the best match with the supported languages """
-    lg = request.args.get('locale')
-    if lg in app.config['LANGUAGES']:
-        return lg
-    if (g.get('user') and g.user.get("locale", None)
-            and g.user["locale"] in app.config['LANGUAGES']):
-        return g.user["locale"]
-    return request.accept_languages.best_match(app.config['LANGUAGES'])
+    """
+    Get locale from request.
+
+    Use a <user>'s preferred local if it is supported
+
+    Order of priority:
+        - Locale from URL parameters
+        - Locale from user settings
+        - Locale from request header
+        - Default locale
+    """
+    locale = request.args.get('locale')
+    if locale and locale in Config.LANGUAGES:
+        return locale
+    try:
+        user = get_user()
+        if user and user['locale'] in Config.LANGUAGES:
+            return user['locale']
+        raise Exception
+    except Exception:
+        return request.accept_languages.best_match(Config.LANGUAGES)
 
 
+# simulate getting user from databse
+def get_user():
+    """
+    Returns user dictionary or None if ID cannot be found or
+    if <login_as> was not passed.
+    """
+    user_id = request.args.get('login_as')
+    if not user_id:
+        return None
+    try:
+        user_id = int(user_id)
+        if user_id < 1 or user_id > 4:
+            raise Exception
+    except Exception:
+        return None
+    return users[user_id]
+
+
+# loads user before page is rendered, ignore empty line below :(
+
+@app.before_request
+def before_request():
+    """
+    Uses get_user() to find a user, if any, and set it as g.user.
+    """
+    data = get_user()
+    if data:
+        g.user = data
+        home_text = _("You are logged in as %(name)s.", name=data['name'])
+        return render_template('5-index.html', home_text=home_text)
+    else:
+        return render_template('5-index.html', home_text=_('not_logged_in'))
+
+
+# index page
+@app.route('/')
+def index():
+    """
+    Return the index page.
+    """
+    return render_template('5-index.html')
+
+
+# run app
 if __name__ == '__main__':
     app.run()
