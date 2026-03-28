@@ -1,16 +1,10 @@
 #!/usr/bin/env python3
-"""
-6-app.py
-"""
-
 from flask import Flask, render_template, request, g
 from flask_babel import Babel
 
 app = Flask(__name__)
-babel = Babel(app)
 
 class Config:
-    """Config class for Babel"""
     LANGUAGES = ["en", "fr"]
     BABEL_DEFAULT_LOCALE = "en"
     BABEL_DEFAULT_TIMEZONE = "UTC"
@@ -27,7 +21,6 @@ users = {
 
 
 def get_user():
-    """Retrieve a user based on login_as parameter"""
     user_id = request.args.get("login_as")
     if user_id:
         try:
@@ -39,32 +32,33 @@ def get_user():
 
 @app.before_request
 def before_request():
-    """Set user globally before each request"""
     g.user = get_user()
 
 
-@babel.localeselector
 def get_locale():
-    """Determine the best match with our supported languages"""
+    """Determine best locale"""
 
-    # 1. Locale from URL parameters
+    # 1. URL param
     locale = request.args.get("locale")
     if locale and locale in app.config["LANGUAGES"]:
         return locale
 
-    # 2. Locale from user settings
+    # 2. User locale
     if g.get("user"):
         user_locale = g.user.get("locale")
         if user_locale and user_locale in app.config["LANGUAGES"]:
             return user_locale
 
-    # 3. Locale from request header
+    # 3. Header
     return request.accept_languages.best_match(app.config["LANGUAGES"])
+
+
+# 🔥 IMPORTANT CHANGE HERE
+babel = Babel(app, locale_selector=get_locale)
 
 
 @app.route("/")
 def index():
-    """Render index page"""
     return render_template("6-index.html")
 
 
