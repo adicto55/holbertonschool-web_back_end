@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
-"""
-Mock logging in
-"""
-from flask import Flask, render_template, request, g
-from flask_babel import Babel
-from typing import Union, Dict
+""" a basic flask app"""
+from flask import Flask, g, render_template, request
+from flask_babel import Babel, _
+
+app = Flask(__name__)
 
 
-class Config:
-    """
-    Configuration class for Babel
-    """
-    LANGUAGES =["en", "fr"]
+class Config(object):
+    """ Config class for Babel object """
+    LANGUAGES = ["en", "fr"]
     BABEL_DEFAULT_LOCALE = "en"
     BABEL_DEFAULT_TIMEZONE = "UTC"
 
 
-app = Flask(__name__)
 app.config.from_object(Config)
-
-# Mock database user table
+babel = Babel(app)
 users = {
     1: {"name": "Balou", "locale": "fr", "timezone": "Europe/Paris"},
     2: {"name": "Beyonce", "locale": "en", "timezone": "US/Central"},
@@ -28,49 +23,43 @@ users = {
 }
 
 
-def get_user() -> Union[Dict, None]:
-    """
-    Returns a user dictionary or None if the ID cannot be found
-    or if login_as was not passed.
-    """
-    login_id = request.args.get('login_as')
-    if login_id:
-        try:
-            return users.get(int(login_id))
-        except ValueError:
-            return None
+@app.before_request
+def before_request():
+    """ function to determine if a user is logged in, and the language """
+    id = request.args.get('login_as')
+    d_user = get_user(id)
+    if d_user:
+        g.user = d_user
+
+
+def get_user(id):
+    """ returns a user dictionary or None """
+    if id and int(id) in users:
+        return users[int(id)]
     return None
 
 
-@app.before_request
-def before_request() -> None:
-    """
-    Find a user if any, and set it as a global on flask.g.user
-    """
-    g.user = get_user()
+@app.route('/')
+def hello():
+    """ render a basic html file """
+    login = False
+    if g.get('user') is not None:
+        login = True
+
+    return render_template('5-index.html', login=login)
 
 
-def get_locale() -> str:
-    """
-    Determine the best match with our supported languages.
-    """
-    locale = request.args.get('locale')
-    if locale and locale in app.config['LANGUAGES']:
-        return locale
+@babel.localeselector
+def get_locale():
+    """ a function to determine the best match with the supported languages """
+    lg = request.args.get('locale')
+    if lg in app.config['LANGUAGES']:
+        return lg
+    if (g.get('user') and g.user.get("locale", None)
+            and g.user["locale"] in app.config['LANGUAGES']):
+        return g.user["locale"]
     return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
-babel = Babel()
-babel.init_app(app, locale_selector=get_locale)
-
-
-@app.route('/', strict_slashes=False)
-def index() -> str:
-    """
-    Renders a parametrized html template
-    """
-    return render_template('5-index.html')
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run()

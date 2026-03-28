@@ -46,7 +46,7 @@ def hello():
     if g.get('user') is not None:
         login = True
 
-    return render_template('6-index.html', login=login)
+    return render_template('5-index.html', login=login)
 
 
 @babel.localeselector
