@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """
-6-app.py: Flask application with user locale priority
+6-app.py
 """
+
 from flask import Flask, render_template, request, g
 from flask_babel import Babel
-from typing import Dict, Union
 
+app = Flask(__name__)
+babel = Babel(app)
 
 class Config:
     """Config class for Babel"""
@@ -13,78 +15,58 @@ class Config:
     BABEL_DEFAULT_LOCALE = "en"
     BABEL_DEFAULT_TIMEZONE = "UTC"
 
-
-app = Flask(__name__)
 app.config.from_object(Config)
-app.url_map.strict_slashes = False
-babel = Babel(app)
 
-# Mock database of users
+# Simulated users
 users = {
-    1: {"name": "Balou", "locale": "fr", "timezone": "Europe/Paris"},
-    2: {"name": "Beyonce", "locale": "en", "timezone": "US/Central"},
-    3: {"name": "Spock", "locale": "kg", "timezone": "Vulcan"},
-    4: {"name": "Teletubby", "locale": None, "timezone": "Europe/London"},
+    1: {"name": "Balou", "locale": "fr"},
+    2: {"name": "Beyonce", "locale": "en"},
+    3: {"name": "Spock", "locale": "kg"},  # unsupported
+    4: {"name": "Teletubby", "locale": None},
 }
 
 
-def get_user() -> Union[Dict, None]:
-    """
-    Returns a user dictionary if ID is found in the 'login_as' URL parameter,
-    otherwise returns None.
-    """
-    login_id = request.args.get('login_as')
-    if login_id:
+def get_user():
+    """Retrieve a user based on login_as parameter"""
+    user_id = request.args.get("login_as")
+    if user_id:
         try:
-            return users.get(int(login_id))
-        except ValueError:
+            return users.get(int(user_id))
+        except Exception:
             return None
     return None
 
 
 @app.before_request
-def before_request() -> None:
-    """
-    Finds a user and sets it as a global on flask.g.user.
-    Executed before all other functions.
-    """
+def before_request():
+    """Set user globally before each request"""
     g.user = get_user()
 
 
 @babel.localeselector
-def get_locale() -> str:
-    """
-    Determines the best match for supported languages based on priority.
-    
-    Priority order:
-    1. Locale from URL parameters
-    2. Locale from user settings
-    3. Locale from request header
-    4. Default locale
-    """
-    # 1. Locale from URL parameters (?locale=fr)
-    url_locale = request.args.get('locale')
-    if url_locale in app.config['LANGUAGES']:
-        return url_locale
+def get_locale():
+    """Determine the best match with our supported languages"""
 
-    # 2. Locale from user settings (e.g., Balou prefers 'fr')
-    if g.user and g.user.get('locale') in app.config['LANGUAGES']:
-        return g.user.get('locale')
+    # 1. Locale from URL parameters
+    locale = request.args.get("locale")
+    if locale and locale in app.config["LANGUAGES"]:
+        return locale
 
-    # 3. Locale from request headers (Accept-Language)
-    header_locale = request.accept_languages.best_match(app.config['LANGUAGES'])
-    if header_locale:
-        return header_locale
+    # 2. Locale from user settings
+    if g.get("user"):
+        user_locale = g.user.get("locale")
+        if user_locale and user_locale in app.config["LANGUAGES"]:
+            return user_locale
 
-    # 4. Default locale from config
-    return app.config['BABEL_DEFAULT_LOCALE']
+    # 3. Locale from request header
+    return request.accept_languages.best_match(app.config["LANGUAGES"])
 
 
-@app.route('/')
-def index() -> str:
-    """Renders the 6-index.html template"""
-    return render_template('6-index.html')
+@app.route("/")
+def index():
+    """Render index page"""
+    return render_template("6-index.html")
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port="5000")
+    app.run(debug=True)
