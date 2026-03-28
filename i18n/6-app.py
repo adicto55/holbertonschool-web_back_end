@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Use user locale
+Use user locale - Task 6
 """
 from flask import Flask, render_template, request, g
 from flask_babel import Babel
@@ -18,6 +18,8 @@ class Config:
 
 app = Flask(__name__)
 app.config.from_object(Config)
+babel = Babel()
+
 
 # Mock database user table
 users = {
@@ -31,33 +33,26 @@ users = {
 def get_user() -> Union[Dict, None]:
     """
     Returns a user dictionary or None if the ID cannot be found
-    or if login_as was not passed.
     """
     login_id = request.args.get('login_as')
     if login_id:
-        try:
-            return users.get(int(login_id))
-        except (ValueError, TypeError):
-            return None
+        return users.get(int(login_id))
     return None
 
 
 @app.before_request
 def before_request() -> None:
     """
-    Find a user if any, and set it as a global on flask.g.user
+    Executed before all other functions to set the global user
     """
-    g.user = get_user()
+    user = get_user()
+    g.user = user
 
 
 def get_locale() -> str:
     """
     Determine the best match with our supported languages.
-    Priority order:
-    1. Locale from URL parameters
-    2. Locale from user settings
-    3. Locale from request header
-    4. Default locale
+    Priority: URL parameters -> User settings -> Request header -> Default
     """
     # 1. Locale from URL parameters
     locale = request.args.get('locale')
@@ -65,26 +60,20 @@ def get_locale() -> str:
         return locale
 
     # 2. Locale from user settings
-    if g.user and g.user.get('locale') in app.config['LANGUAGES']:
+    if g.get('user') and g.user.get('locale') in app.config['LANGUAGES']:
         return g.user.get('locale')
 
     # 3. Locale from request header
-    header_locale = request.accept_languages.best_match(app.config['LANGUAGES'])
-    if header_locale:
-        return header_locale
-
-    # 4. Default locale
-    return app.config['BABEL_DEFAULT_LOCALE']
+    return request.accept_languages.best_match(app.config['LANGUAGES'])
 
 
-babel = Babel()
 babel.init_app(app, locale_selector=get_locale)
 
 
 @app.route('/', strict_slashes=False)
 def index() -> str:
     """
-    Renders a parametrized html template
+    Renders the 6-index.html template
     """
     return render_template('6-index.html')
 
