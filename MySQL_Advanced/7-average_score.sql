@@ -1,5 +1,8 @@
--- SQL script that creates a stored procedure to compute and store average score for a user
+-- Creates a stored procedure ComputeAverageScoreForUser that 
+-- computes and stores the average score for a student.
+DELIMITER $$
 
+DROP PROCEDURE IF EXISTS ComputeAverageScoreForUser;
 CREATE PROCEDURE ComputeAverageScoreForUser(IN user_id INT)
 BEGIN
     UPDATE users
@@ -9,4 +12,6 @@ BEGIN
         WHERE corrections.user_id = user_id
     )
     WHERE id = user_id;
-END;
+END $$
+
+DELIMITER ;
