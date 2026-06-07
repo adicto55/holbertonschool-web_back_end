@@ -2,6 +2,7 @@
 """
 Module for Hypermedia Pagination
 """
+
 import csv
 import math
 from typing import List, Tuple, Dict, Any
@@ -40,16 +41,16 @@ class Server:
     def get_page(self, page: int = 1, page_size: int = 10) -> List[List]:
         """
         Returns a page of the dataset.
-        
+
         Args:
             page (int): The page number (1-indexed).
             page_size (int): The number of items per page.
-            
+
         Returns:
             List[List]: A list of rows for the requested page.
         """
-        assert type(page) == int and page > 0
-        assert type(page_size) == int and page_size > 0
+        assert isinstance(page, int) and page > 0
+        assert isinstance(page_size, int) and page_size > 0
 
         start_index, end_index = index_range(page, page_size)
         dataset = self.dataset()
@@ -59,21 +60,19 @@ class Server:
     def get_hyper(self, page: int = 1, page_size: int = 10) -> Dict[str, Any]:
         """
         Returns a dictionary containing pagination details.
-        
+
         Args:
             page (int): The page number (1-indexed).
             page_size (int): The number of items per page.
-            
+
         Returns:
             Dict[str, Any]: A dictionary with hypermedia pagination details.
         """
-        # Get the current page of data using get_page (which also handles assertions)
         data = self.get_page(page, page_size)
-        
-        # Calculate total items and total pages
+
         dataset_len = len(self.dataset())
         total_pages = math.ceil(dataset_len / page_size)
-        
+
         return {
             "page_size": len(data),
             "page": page,

@@ -2,6 +2,7 @@
 """
 Module for Simple Pagination
 """
+
 import csv
 import math
 from typing import List, Tuple
@@ -40,24 +41,18 @@ class Server:
     def get_page(self, page: int = 1, page_size: int = 10) -> List[List]:
         """
         Returns a page of the dataset.
-        
+
         Args:
             page (int): The page number (1-indexed).
             page_size (int): The number of items per page.
-            
+
         Returns:
             List[List]: A list of rows for the requested page.
         """
-        # Verify that both arguments are integers greater than 0
-        assert type(page) == int and page > 0
-        assert type(page_size) == int and page_size > 0
+        assert isinstance(page, int) and page > 0
+        assert isinstance(page_size, int) and page_size > 0
 
-        # Find the correct start and end indexes
         start_index, end_index = index_range(page, page_size)
-        
-        # Get the parsed dataset
         dataset = self.dataset()
 
-        # Return the appropriate slice of the dataset
-        # (If start_index is out of range, Python handles it and returns an empty list)
         return dataset[start_index:end_index]
